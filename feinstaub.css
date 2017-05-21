@@ -1,0 +1,27 @@
+#feinstaubdata,.feinstaubdata{
+	font-family : sans-serif;
+	font-size: 11pt;
+
+	background-color:rgba(255,255,255,0.9);
+	color:#000;
+	-webkit-border-radius: 8px;
+	-moz-border-radius: 8px;
+	border-radius: 8px;
+	padding: 8px;
+	margin: 8px;
+	font-size: 11pt;
+}
+.feinstaubtext{}
+#feinstaubdata h1,.feinstaubdata h1{
+	color:#2E78BA;
+	padding: 0px;
+	font-size:12pt;
+	margin:0;
+}
+#feinstaubdata canvas,.feinstaubcanvas{
+	border:1px solid #666;
+}
+#feinstaubdata a,.feinstaubdata a{
+	color:#2E78BA;
+	margin:0;
+}
