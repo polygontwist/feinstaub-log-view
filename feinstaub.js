@@ -2,8 +2,11 @@
 
 var feinstaubviewer=function(zielID){
 	var feinstaubdata={};
-	var quellurlNow="http://rp1/io/feinstaub.php";//aktuelle Werte
-	var quellurlDay="http://rp1/io/feinstaublog.php";//Ordner
+	
+	//Folgende URLs müssen an Deinen Gegebenheiten angepasst werden:
+	var quellurlNow="http://rp1/io/feinstaub.php";		//aktuelle Werte
+	var quellurlDay="http://rp1/io/feinstaublog.php";	//Ordner
+	
 	var candat={
 		width:800,//86400 sec 1440
 		height:180,
