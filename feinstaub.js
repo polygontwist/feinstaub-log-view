@@ -278,7 +278,7 @@ var feinstaubviewer=function(zielID){
 		EmpaengerRefresh();
 	}
 	var showTextInfo=function(){
-		var i,o,node,zeigen,s,lc,sval,sid;
+		var i,o,node,zeigen,s,lc,sval,sid,macclients;
 		
 		if(ZielText==undefined)return;
 		ZielText.innerHTML="";
@@ -287,7 +287,8 @@ var feinstaubviewer=function(zielID){
 		
 		var sensorval=feinstaubdata.feinstaub.daten.sensordatavalues;
 		var ipAddress=feinstaubdata.feinstaub.ipAddress;
-		var macclients=feinstaubdata.maclog.clients;
+		if(feinstaubdata.maclog!=undefined)
+			macclients=feinstaubdata.maclog.clients;
 		
 		if(optionen.text!=undefined){
 			var consolenoutput="";
