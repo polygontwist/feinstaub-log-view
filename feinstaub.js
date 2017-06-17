@@ -26,7 +26,7 @@ var feinstaubviewer=function(zielID){
 	var optionen={//default
 		"view":"text,daypic",//monpic
 		"daypic":"WIFI,SDS_P1,SDS_P2",
-		"text":"titel,datum,SDS_P1,SDS_P2,temperature,humidity,signal"//,IP,MAC,NAME,STAT
+		"text":"titel,datum,SDS_P1,SDS_P2,temperature,humidity,signal,IP"//,MAC,NAME,STAT
 		//"datumpic":"20170210" //nur für Diagramm
 		};
 	//
@@ -235,26 +235,30 @@ var feinstaubviewer=function(zielID){
 	}
 	var getIPValues=function(id,ipAddress,macclients){//id>IP,MAC,NAME,STAT
 		var i,o,re="";
-		if(macclients!=undefined)
-		for(i=0;i<macclients.length;i++){
-			o=macclients[i];
-			if(o.ip==ipAddress){
-				switch(id){
-					case "IP":
-						re=o.ip;
-					break;
-					case "MAC":
-						re=o.mac;
-					break;
-					case "NAME":
-						re=o.name;
-					break;
-					case "STAT":
-						re=o.stat;
-					break;
-				}	
+		if(macclients!=undefined){
+			for(i=0;i<macclients.length;i++){
+				o=macclients[i];
+				if(o.ip==ipAddress){
+					switch(id){
+						case "IP":
+							re=o.ip;
+						break;
+						case "MAC":
+							re=o.mac;
+						break;
+						case "NAME":
+							re=o.name;
+						break;
+						case "STAT":
+							re=o.stat;
+						break;
+					}	
+				}
 			}
+		}else{
+			if(id=="IP")re=ipAddress;
 		}
+		
 		return re;
 	}
 	
@@ -335,6 +339,8 @@ var feinstaubviewer=function(zielID){
 						break;
 					
 					case "IP":
+						sval=ipAddress;
+						break;
 					case "MAC":
 					case "NAME":
 					case "STAT":
