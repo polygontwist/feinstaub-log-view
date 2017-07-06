@@ -170,6 +170,10 @@ var feinstaubviewer=function(zielID){
 			s=d.getTime(),
 			tag="";
 		if(optionen.view==undefined)return;
+		if(optionen.monat!=undefined){
+			var tempd=new Date(d.getFullYear(),d.getMonth()+optionen.monat,1,0,0,0,0);
+			d=tempd;
+		}
 		
 		for(i=0;i<optionen.view.length;i++){
 			if(optionen.view[i]=="text"){
