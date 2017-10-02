@@ -180,7 +180,7 @@ var feinstaubviewer=function(zielID){
 				loadData(quellurlNow+"?t="+s+tag,parseTextdata,"");
 			}
 			if(optionen.view[i]=="daypic"){
-				var tagdata=d.getFullYear();
+				var tagdata=d.getFullYear()+'';
 				if((d.getMonth()+1)<10)tagdata+='0';
 				tagdata+=(d.getMonth()+1);
 				if(d.getDate()<10)tagdata+='0';
@@ -193,7 +193,7 @@ var feinstaubviewer=function(zielID){
 				loadData(quellurlDay+"?dat="+tagdata+".log&t="+s+tag,parseDAYPICdata,"");				
 			}
 			if(optionen.view[i]=="monpic"){
-				var yyyymm=d.getFullYear();
+				var yyyymm=d.getFullYear()+'';
 				if((d.getMonth()+1)<10)yyyymm+='0';
 				yyyymm+=(d.getMonth()+1);
 				
@@ -589,8 +589,9 @@ var feinstaubviewer=function(zielID){
 		}
 		
 		//drawlines
+		if(daydata.daten.length<1)return;
 		var lastdat=daydata.daten[daydata.daten.length-1];
-		
+
 		var cc=KurvenCanvas.getContext('2d');
 		var ddatum=lastdat.datum.split('-');
 		
