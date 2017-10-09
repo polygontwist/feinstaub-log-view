@@ -75,6 +75,7 @@ var feinstaubviewer=function(zielID){
 	}
 	
 	var loadData =function(url, auswertfunc,id){
+		console.log("hole Daten",url);
 		var loObj=new Object();
 		loObj.url=url;    
 		loObj.myID=id;
