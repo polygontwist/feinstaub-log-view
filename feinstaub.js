@@ -591,7 +591,8 @@ var feinstaubviewer=function(zielID){
 		//drawlines
 		if(daydata.daten.length<1)return;
 		var lastdat=daydata.daten[daydata.daten.length-1];
-
+		if(lastdat==undefined)return;
+		
 		var cc=KurvenCanvas.getContext('2d');
 		var ddatum=lastdat.datum.split('-');
 		
