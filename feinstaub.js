@@ -1,11 +1,14 @@
 "use strict";
 
 var feinstaubviewer=function(zielID){
+	var version="feinstaubviewer V2017-10-15 http//www.a-d-k.de";
+	
 	var feinstaubdata={};
 	
 	//Folgende URLs müssen an Deinen Gegebenheiten angepasst werden:
 	var quellurlNow="http://rp1/io/feinstaub.php";		//aktuelle Werte
 	var quellurlDay="http://rp1/io/feinstaublog.php";	//Ordner
+	
 	
 	var candat={
 		width:800,//86400 sec 1440
@@ -61,16 +64,28 @@ var feinstaubviewer=function(zielID){
 			return Object.prototype.toString.call(o); 
 	}
 	
-	var parseJSON=function(s){
+	var parseJSON=function(s,info){
 		var re=s;
 		if(re.indexOf("'")>-1)re=re.split("'").join('"');
 		try {
 			re=JSON.parse(re);
 			} 
-		catch(e) {
-			console.log("JSON.parse ERROR",re);
+		catch(e) {			
 			re={"error":"parseerror"};
+			
+			if(s.indexOf("\"daten\":}")>-1){
+				console.log(">>>> Fehlernde Daten, Reperaturversuch...", info);
+				s=s.split("\"daten\":}").join("\"daten\":{}}");
+				re=parseJSON(s,info);
+				if(re.error!=undefined){
+					console.log("JSON.parse ERROR", info,re);
+				}
+				else{
+					console.log(">>>> Reperaturversuch OK", info);
+				}
 			}
+			
+		}
 		return re;
 	}
 	
@@ -97,12 +112,11 @@ var feinstaubviewer=function(zielID){
 
 		loObj.load=function(url){	
 			var loader=loObj.xmlloader;					
-			loader.parserfunc=loObj.parseFunc;
 			loader.myID=loObj.myID;
 			loader.open('GET',url,true);//open(method, url, async, user, password)
 			loader.onreadystatechange = function(){
 				if (loader.readyState == 4) { 					   
-					loader.parserfunc(loader);//.responseText
+					auswertfunc(loader,url);//.responseText
 					}
 			};
 			// loader.timeout=  //ms
@@ -110,7 +124,6 @@ var feinstaubviewer=function(zielID){
 			loader.send(null);
 			return false;
 		}	
-		loObj.parseFunc = auswertfunc;    
 		loObj.load(url);    
 	}
 	
@@ -132,7 +145,7 @@ var feinstaubviewer=function(zielID){
 		
 		var tmp=basisnode.getAttribute("data-option");
 		if(tmp!=undefined){
-			tmp=parseJSON(tmp);
+			tmp=parseJSON(tmp,'ini data-option');
 			if(tmp.error==undefined)optionen=tmp;			
 		}
 		if(optionen.view!=undefined)	optionen.view=optionen.view.split(',');
@@ -142,6 +155,7 @@ var feinstaubviewer=function(zielID){
 		//console.log(optionen);
 		create();
 		reload();
+		console.log(version);
 	}
 	var create=function(){
 		var i;
@@ -216,10 +230,10 @@ var feinstaubviewer=function(zielID){
 		if(data==undefined)return re;
 		for(i=0;i<data.length;i++){
 			o=data[i];
-			if(o.value_type==id){
-				if(o.value_type=="temperature"){re="Temperatur: ";}
+			if(o.value_type.indexOf(id)>-1){
+				if(o.value_type.indexOf("temperature")>-1){re="Temperatur: ";}//HTU21D or DHT22(AM2302)
 				else
-				if(o.value_type=="humidity"){re="Luftfeuchtigkeit: ";}
+				if(o.value_type.indexOf("humidity")>-1){re="Luftfeuchtigkeit: ";}//HTU21D or DHT22(AM2302)
 				else
 				if(o.value_type=="SDS_P1"){re="PM10: ";}
 				else
@@ -231,8 +245,8 @@ var feinstaubviewer=function(zielID){
 				
 				re+=o.value;
 				if( (o.value_type=="SDS_P1")||(o.value_type=="SDS_P2") )re+=" µg/m³";
-				if( (o.value_type=="temperature") )re+=" °C";
-				if( (o.value_type=="humidity") )re+=" %";
+				if( (o.value_type.indexOf("temperature")>-1) )re+=" °C";
+				if( (o.value_type.indexOf("humidity")>-1) )re+=" %";
 				
 			}
 		}
@@ -267,7 +281,7 @@ var feinstaubviewer=function(zielID){
 		return re;
 	}
 	
-	var parseTextdata=function(data){
+	var parseTextdata=function(data,url){
 		if(data!=""){
 			try {
 				feinstaubdata=JSON.parse(data.responseText);
@@ -526,12 +540,12 @@ var feinstaubviewer=function(zielID){
 	
 	
 	
-	var parseDAYPICdata=function(data){
+	var parseDAYPICdata=function(data,url){
 		var i,t,o,ov,x,y, hh,mm,ss,lc;
 		if(KurvenCanvas==undefined)return;
 		if(data.responseText=="")return;
 		
-		var daydata=parseJSON('{"daten":['+data.responseText+']}');
+		var daydata=parseJSON('{"daten":['+data.responseText+']}', url);
 		if(daydata.error!=undefined){
 			startReloadTimer(1000*5);//5sec
 			return;
@@ -543,6 +557,8 @@ var feinstaubviewer=function(zielID){
 				"sensordatavalues":[
 					{"value_type":"SDS_P1","value":"56.63"},
 					{"value_type":"SDS_P2","value":"40.22"},
+					{"value_type":"HTU21D_humidity","value":"66.91"},
+					{"value_type":"HTU21D_temperature","value":"21.16"},
 					{"value_type":"temperature","value":"-3.10"},
 					{"value_type":"humidity","value":"59.50"},
 					{"value_type":"samples","value":"324128"},
@@ -558,8 +574,8 @@ var feinstaubviewer=function(zielID){
 		var daten={
 			SDS_P1:[],
 			SDS_P2:[],
-			temperature:[],//dht22
-			humidity:[],//dht22
+			temperature:[],//dht22 or HTU21D
+			humidity:[],//dht22 or HTU21D
 			WIFI:[] //0..-90			
 		}
 		for(i=0;i<daydata.daten.length;i++){
@@ -571,10 +587,10 @@ var feinstaubviewer=function(zielID){
 			x=Math.floor(candat.width/(24*60*60) * (hh*60*60+ mm*60 +ss));
 			for(t=0;t<o.daten.sensordatavalues.length;t++) {
 				ov=o.daten.sensordatavalues[t];
-				if(ov.value_type=="temperature"){
+				if(ov.value_type.indexOf("temperature")>-1){//HTU21D or DHT22(AM2302)
 					daten.temperature.push({"value":parseFloat(ov.value),"x":x } );
 				}
-				if(ov.value_type=="humidity"){
+				if(ov.value_type.indexOf("humidity")>-1){//HTU21D or DHT22(AM2302)
 					daten.humidity.push({"value":parseFloat(ov.value),"x":x });
 				}
 				if(ov.value_type=="SDS_P1"){
@@ -646,20 +662,21 @@ var feinstaubviewer=function(zielID){
 		startReloadTimer(1000*60);//1min
 	}
 	
-	var parseMonPICdata=function(data){
+	var parseMonPICdata=function(data,url){
 		var i,t,o,ov,x,y, tt,hh,mm,ss,lc;
 		if(KurvenMonCanvas==undefined)return;
 		if(data.responseText=="")return;
 		
-		var daydata=parseJSON('{"daten":['+data.responseText+']}');
+		var daydata=parseJSON('{"daten":['+data.responseText+']}', url);
+		if(daydata.daten==undefined){console.log('fehlerhafte Daten',data.responseText); return;}
 		//console.log(">",daydata);
 		
 		//Daten aufbereiten
 		var daten={
 			SDS_P1:[],
 			SDS_P2:[],
-			temperature:[],//dht22
-			humidity:[],//dht22
+			temperature:[],//dht22 or HTU21D
+			humidity:[],//dht22 or HTU21D
 			WIFI:[], //0..-90			
 			software_version:[] 			
 		}
@@ -675,12 +692,13 @@ var feinstaubviewer=function(zielID){
 			
 			x=Math.floor(candat.width/( 31*24*60*60 ) * (tt*24*60*60 +  hh*60*60+ mm*60 +ss));
 			
+			if(o.daten.sensordatavalues!=undefined)
 			for(t=0;t<o.daten.sensordatavalues.length;t++) {
 				ov=o.daten.sensordatavalues[t];
-				if(ov.value_type=="temperature"){
+				if(ov.value_type.indexOf("temperature")>-1){//dht22 or HTU21D
 					daten.temperature.push({"value":parseFloat(ov.value),"x":x } );
 				}
-				if(ov.value_type=="humidity"){
+				if(ov.value_type.indexOf("humidity")>-1){//dht22 or HTU21D
 					daten.humidity.push({"value":parseFloat(ov.value),"x":x });
 				}
 				if(ov.value_type=="SDS_P1"){
@@ -693,6 +711,7 @@ var feinstaubviewer=function(zielID){
 					daten.WIFI.push({"value":parseInt(ov.value.split(' ')[0]),"x":x });//"-41 dBm"
 				}
 			}
+			
 			if(o.daten.software_version!=undefined){
 				daten.software_version.push({"value":o.daten.software_version,"x":x });//"NRZ-2017-066"
 			}
