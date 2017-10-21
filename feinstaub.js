@@ -1,7 +1,7 @@
 "use strict";
 
 var feinstaubviewer=function(zielID){
-	var version="feinstaubviewer V2017-10-15 http//www.a-d-k.de";
+	var version="feinstaubviewer V2017-10-22 http//www.a-d-k.de";
 	
 	var feinstaubdata={};
 	
@@ -64,6 +64,44 @@ var feinstaubviewer=function(zielID){
 			return Object.prototype.toString.call(o); 
 	}
 	
+	var repair2JSON=function(s){
+		var re="",i,s;
+		var liste=s.split('{"time"');
+		/*
+			check ob Daten-Tag richtig geschlossen wurde
+			'"}' -> '"}]}}'
+			wenn nicht, diesen Teil überlesen
+			
+		*/
+		re=liste[0];/*	{"daten":[	*/
+		for(i=1;i<liste.length;i++){
+			s=liste[i];
+			
+			if(i==liste.length-1){//letzte Zeile enthält abschließende Zeichen von erster Zeile
+				s=s.slice(0, -3); //entfernen				
+			}
+			
+			//Einzelne Zeile testen
+			try{
+					JSON.parse('{"time"'+s.slice(0, -1) );
+					//dafür: letztes Zeichen (Komma) entfernen
+					
+					//kein Fehler, Zeile behalten
+					re+='{"time"'+s;
+			}
+			catch(e) {
+					console.log("V2ERR",i,'{"time"'+s);
+			}
+		}
+		if(re.slice(-1)==","){//wenn letztes Zeichen ein Komme, dieses entfernen
+			re=re.slice(0, -1);
+		}
+		
+		re+="]}"; /* von {"daten":[ */
+		return re;
+	}
+	
+	
 	var parseJSON=function(s,info){
 		var re=s;
 		if(re.indexOf("'")>-1)re=re.split("'").join('"');
@@ -74,17 +112,31 @@ var feinstaubviewer=function(zielID){
 			re={"error":"parseerror"};
 			
 			if(s.indexOf("\"daten\":}")>-1){
-				console.log(">>>> Fehlernde Daten, Reperaturversuch...", info);
+				console.log(">>>Fehlernde Daten, Reperaturversuch 1...", info);
 				s=s.split("\"daten\":}").join("\"daten\":{}}");
 				re=parseJSON(s,info);
 				if(re.error!=undefined){
-					console.log("JSON.parse ERROR", info,re);
+					console.log(">>> Reperaturversuch 1 ERROR", info);
 				}
 				else{
-					console.log(">>>> Reperaturversuch OK", info);
+					console.log(">>> Reperaturversuch 1 OK", info);
+				}
+			}else{
+				
+				console.log(">>>Reperaturversuch 2 (Daten überspringen)");
+				s=repair2JSON(s);
+				try {
+					re=JSON.parse(s);
+				}
+				catch(e) {	
+					re={"error":"parseerror"};
+					console.log(">>>Reperaturversuch 2 ERROR");
+				}
+				
+				if(!(re.error!=undefined)){
+					console.log(">>>Reperaturversuch 2 OK (Daten überspringen)");
 				}
 			}
-			
 		}
 		return re;
 	}
@@ -668,8 +720,8 @@ var feinstaubviewer=function(zielID){
 		if(data.responseText=="")return;
 		
 		var daydata=parseJSON('{"daten":['+data.responseText+']}', url);
-		if(daydata.daten==undefined){console.log('fehlerhafte Daten',data.responseText); return;}
-		//console.log(">",daydata);
+		if(daydata.daten==undefined){console.log('fehlerhafte Daten'); return;}
+		//console.log(">",daydata);,data.responseText
 		
 		//Daten aufbereiten
 		var daten={
