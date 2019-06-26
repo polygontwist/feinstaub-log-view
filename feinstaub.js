@@ -1,7 +1,7 @@
 "use strict";
 
 var feinstaubviewer=function(zielID){
-	var version="feinstaubviewer V2017-10-22 http//www.a-d-k.de";
+	var version="feinstaubviewer V2019-06-26 http//www.a-d-k.de";
 	
 	var feinstaubdata={};
 	
@@ -21,6 +21,9 @@ var feinstaubviewer=function(zielID){
 		software_versioncolor:"#2b2b2b",
 		showwertebereich:200
 		};
+		
+	var minmax={};
+	var ersteraufruf=true;
 	
 	var basisnode;
 	var ZielText;
@@ -278,7 +281,7 @@ var feinstaubviewer=function(zielID){
 	
 	var getSensorValues=function(id,data){
 		var sensorval=data;
-		var i,re="",o;
+		var i,re="",o,endg="";
 		if(data==undefined)return re;
 		for(i=0;i<data.length;i++){
 			o=data[i];
@@ -296,10 +299,14 @@ var feinstaubviewer=function(zielID){
 					re=o.value_type+': ';
 				
 				re+=o.value;
-				if( (o.value_type=="SDS_P1")||(o.value_type=="SDS_P2") )re+=" µg/m³";
-				if( (o.value_type.indexOf("temperature")>-1) )re+=" °C";
-				if( (o.value_type.indexOf("humidity")>-1) )re+=" %";
+				if( (o.value_type=="SDS_P1")||(o.value_type=="SDS_P2") )endg=" µg/m³";
+				if( (o.value_type.indexOf("temperature")>-1) )endg=" °C";
+				if( (o.value_type.indexOf("humidity")>-1) )endg=" %";
+				re+=endg;
 				
+				if(minmax[o.value_type]!=undefined){
+					re+=' (min: '+minmax[o.value_type].min+endg+', max: '+minmax[o.value_type].max+endg+')'
+				}
 			}
 		}
 		return re;
@@ -343,7 +350,6 @@ var feinstaubviewer=function(zielID){
 				feinstaubdata={}
 			}
 			
-			//console.log(">>",feinstaubdata);
 			showTextInfo();
 			startReloadTimer(1000*60);//1min
 		}
@@ -390,7 +396,6 @@ var feinstaubviewer=function(zielID){
 					case "humidity":
 						node.style.color=candat.humidity;
 						break;
-					
 				}
 				//get Data
 				switch(sid){
@@ -408,7 +413,6 @@ var feinstaubviewer=function(zielID){
 					case "signal":
 						sval=getSensorValues(sid,sensorval);
 						break;
-					
 					case "IP":
 						sval=ipAddress;
 						break;
@@ -570,7 +574,7 @@ var feinstaubviewer=function(zielID){
 		for(i=0;i<data.length;i++){
 			x=data[i].x;
 			drawit=(lastdat!=data[i].value);
-//console.log(data[i].value,drawit,x);						
+
 			if(drawit){
 				cc.fillStyle = color;
 				cc.fillRect( x, 0, 2, candat.height);
@@ -630,6 +634,9 @@ var feinstaubviewer=function(zielID){
 			humidity:[],//dht22 or HTU21D
 			WIFI:[] //0..-90			
 		}
+		
+		minmax={};
+		
 		for(i=0;i<daydata.daten.length;i++){
 			o=daydata.daten[i];
 			t=o.zeit.split(':'); //"17:46:52"
@@ -654,8 +661,17 @@ var feinstaubviewer=function(zielID){
 				if(ov.value_type=="signal"){
 					daten.WIFI.push({"value":parseInt(ov.value.split(' ')[0]),"x":x });//"-41 dBm"
 				}
+				
+				if(minmax[ov.value_type]===undefined){
+					minmax[ov.value_type]={min:parseFloat(ov.value),max:parseFloat(ov.value)};
+				}else{
+					minmax[ov.value_type].min=Math.min(parseFloat(ov.value),minmax[ov.value_type].min);
+					minmax[ov.value_type].max=Math.max(parseFloat(ov.value),minmax[ov.value_type].max);
+				}
 			}
 		}
+		
+		//console.log("minmax",minmax)
 		
 		//drawlines
 		if(daydata.daten.length<1)return;
@@ -711,7 +727,14 @@ var feinstaubviewer=function(zielID){
 				
 		if(optionen.datumpic!=undefined)return;
 		
-		startReloadTimer(1000*60);//1min
+		
+		if(ersteraufruf){
+			ersteraufruf=false;
+			startReloadTimer(1000*5);//5sec
+		}
+		else
+			startReloadTimer(1000*60);//1min
+		
 	}
 	
 	var parseMonPICdata=function(data,url){
