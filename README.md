@@ -12,3 +12,5 @@ feinstaublog.php - Ausgabe Daten eines Tages oder des angegebenen Monats
 index.htm       - Beispiel für die Ausgabe
 ```
 Ausgangsprojekt: http://luftdaten.info/feinstaubsensor-bauen/
+
+Ab Version V2019-06-26 werden die min/max-Werte bei Textausgabe mit angezeigt.
