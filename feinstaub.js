@@ -1,7 +1,7 @@
 "use strict";
 
 var feinstaubviewer=function(zielID){
-	var version="feinstaubviewer V2019-06-26 http//www.a-d-k.de";
+	var version="feinstaubviewer V2019-06-28 http//www.a-d-k.de";
 	
 	var feinstaubdata={};
 	
@@ -305,7 +305,7 @@ var feinstaubviewer=function(zielID){
 				re+=endg;
 				
 				if(minmax[o.value_type]!=undefined){
-					re+=' (min: '+minmax[o.value_type].min+endg+', max: '+minmax[o.value_type].max+endg+')'
+					re+=' <span>(min/max: '+minmax[o.value_type].min+'/'+minmax[o.value_type].max+endg+')</span>';
 				}
 			}
 		}
